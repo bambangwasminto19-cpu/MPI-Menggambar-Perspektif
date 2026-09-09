@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PERSPECTIVE EXPLORER - Petualangan Menggambar Perspektif</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #0d9488;
+            --accent: #f59e0b;
+            --accent-hover: #d97706;
+            --bg-dark: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.85);
+            --card-border: rgba(255, 255, 255, 0.15);
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(13, 148, 136, 0.15) 0%, transparent 40%);
+            padding: 12px;
+        }
+
+        /* Container Utama Game (Rasio 16:9) */
+        #game-container {
+            width: min(100vw - 24px, (100vh - 24px) * 16 / 9);
+            aspect-ratio: 16 / 9;
+            max-width: 1280px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            margin: auto;
+        }
+
+        /* Header Navigation & Info Bar */
+        header {
+            padding: 16px 24px;
+            background: rgba(15, 23, 42, 0.6);
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .author-tag {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .author-tag strong {
+            color: var(--accent);
+            font-size: 0.95rem;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .stat-badge {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-badge span {
+            color: var(--accent);
+        }
+
+        /* Page Layouts */
+        .page {
+            display: none;
+            padding: 20px 30px;
+            flex: 1;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.4s ease-in-out;
+            width: 100%;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Elements Styling */
+        h1 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            text-align: center;
+            background: linear-gradient(135deg, #60a5fa, #38bdf8, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            color: var(--text-light);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        p.subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-accent:hover {
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--card-border);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+        }
+
+        /* Input Styling */
+        .input-group {
+            margin-bottom: 24px;
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            background: rgba(15, 23, 42, 0.8);
+            color: white;
+            font-size: 1rem;
+            text-align: center;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary);
+        }
+
+        /* Canvas Wrapper */
+        .canvas-container {
+            position: relative;
+            margin: 10px 0;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: #020617;
+            max-width: 100%;
+        }
+
+        canvas {
+            display: block;
+            cursor: crosshair;
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Dynamic Progress Bar */
+        .progress-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            height: 10px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--accent));
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* Feedback Modal/Box */
+        .feedback-box {
+            margin-top: 15px;
+            padding: 14px 20px;
+            border-radius: 12px;
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+            font-size: 0.95rem;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-box.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid var(--success);
+            color: #6ee7b7;
+        }
+
+        .feedback-box.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--danger);
+            color: #fca5a5;
+        }
+
+        /* Grid Layouts for Content */
+        .instructions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 25px;
+        }
+
+        .instruction-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            padding: 18px;
+            border-radius: 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .instruction-icon {
+            background: var(--primary);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        /* Tabs Layout for Learning Content */
+        .tab-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 10px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .materi-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 850px;
+            min-height: 340px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        /* Question Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            width: 100%;
+            max-width: 650px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--card-border);
+            color: white;
+            padding: 16px 20px;
+            border-radius: 14px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .option-btn:hover {
+            background: rgba(37, 99, 235, 0.3);
+            border-color: var(--primary);
+        }
+
+        .option-btn.selected-correct {
+            background: rgba(16, 185, 129, 0.4) !important;
+            border-color: var(--success) !important;
+        }
+
+        .option-btn.selected-wrong {
+            background: rgba(239, 68, 68, 0.4) !important;
+            border-color: var(--danger) !important;
+        }
+
+        .badge-grid {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .badge-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 12px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            min-width: 120px;
+        }
+
+        .badge-icon {
+            font-size: 2rem;
+        }
+
+        .badge-title {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Certificate / Result Card */
+        .result-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+            border: 2px solid var(--accent);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 650px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.2);
+            position: relative;
+        }
+
+        .predicate-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent);
+            margin: 10px 0;
+            letter-spacing: 1px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            h2 { font-size: 1.3rem; }
+            #game-container { 
+                width: 100vw;
+                height: auto;
+                aspect-ratio: 16 / 9;
+                border-radius: 0; 
+                margin: 0; 
+            }
+            .page { padding: 12px; }
+            header { padding: 10px 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- Header Game -->
+        <header>
+            <div class="author-tag">
+                <span id="player-display-name">Perspective Explorer</span>
+                <strong>Bambang Wasminto, S.Pd., M.Pd. | SMPN 14 Semarang</strong>
+            </div>
+            <div class="stats-bar">
+                <div class="stat-badge">⭐ <span id="score-val">0</span> Pts</div>
+                <div class="stat-badge">📍 Level <span id="level-val">1</span></div>
+            </div>
+        </header>
+
+        <!-- HALAMAN 1: BERANDA -->
+        <section id="page-1" class="page active">
+            <h1>PERSPECTIVE EXPLORER</h1>
+            <p class="subtitle">Petualangan Menggambar Perspektif Satu & Dua Titik Lenyap</p>
+            
+            <div class="canvas-container">
+                <canvas id="hero-canvas" width="640" height="240"></canvas>
+            </div>
+
+            <div class="input-group">
+                <label for="player-name">Masukkan Nama Penjelajah:</label>
+                <input type="text" id="player-name" placeholder="Contoh: Budi Pratama" value="Siswa SMP">
+            </div>
+
+            <button class="btn btn-accent" onclick="GameApp.startJourney()">
+                🚀 MULAI PETUALANGAN
+            </button>
+        </section>
+
+        <!-- HALAMAN 2: PETUNJUK PERMAINAN -->
+        <section id="page-2" class="page">
+            <h2>📜 PETUNJUK PERMAINAN</h2>
+            <p class="subtitle">Pahami panduan ini sebelum memulai ekspedisi menggambar!</p>
+
+            <div class="instructions-grid">
+                <div class="instruction-card">
+                    <div class="instruction-icon">1</div>
+                    <div>
+                        <strong>Materi Interaktif</strong>
+                        <p style="font-size:0.85rem; color: var(--text-muted); margin-top:4px;">Pelajari konsep garis horizon, titik lenyap, dan jenis perspektif secara visual.</p>
+                    </div>
+                </div>
+                <div class="instruction-card">
+                    <div class="instruction-icon">2</div>
+                    <div>
+                        <strong>Misi 1: Temukan Titik Lenyap</strong>
+                        <p style="font-size:0.85rem; color: var(--text-muted); margin-top:4px;">Klik langsung pada gambar untuk menemukan lokasi Titik Lenyap secara tepat.</p>
+                    </div>
+                </div>
+                <div class="instruction-card">
+                    <div class="instruction-icon">3</div>
+                    <div>
+                        <strong>Misi 2: Kenali Jenis Perspektif</strong>
+                        <p style="font-size:0.85rem; color: var(--text-muted); margin-top:4px;">Analisis ilustrasi dan tentukan apakah menggunakan 1 atau 2 titik lenyap.</p>
+                    </div>
+                </div>
+                <div class="instruction-card">
+                    <div class="instruction-icon">4</div>
+                    <div>
+                        <strong>Kuis Akhir Evaluasi</strong>
+                        <p style="font-size:0.85rem; color: var(--text-muted); margin-top:4px;">Selesaikan 10 soal evaluasi untuk menguji pemahaman total Anda.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn" onclick="GameApp.goToPage(3)">
+                LANJUTKAN KE MATERI ➔
+            </button>
+        </section>
+
+        <!-- HALAMAN 3: MATERI PEMBELAJARAN -->
+        <section id="page-3" class="page">
+            <h2>📚 MATERI PEMBELAJARAN INTERAKTIF</h2>
+            
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="GameApp.showMateri(1)">1. Konsep Dasar</button>
+                <button class="tab-btn" onclick="GameApp.showMateri(2)">2. Garis Horizon</button>
+                <button class="tab-btn" onclick="GameApp.showMateri(3)">3. Titik Lenyap</button>
+                <button class="tab-btn" onclick="GameApp.showMateri(4)">4. 1 Titik Lenyap</button>
+                <button class="tab-btn" onclick="GameApp.showMateri(5)">5. 2 Titik Lenyap</button>
+            </div>
+
+            <div class="materi-card" id="materi-content">
+                <!-- Konten dinamis disuntikkan via JS -->
+            </div>
+
+            <div style="margin-top: 20px; display: flex; gap: 12px;">
+                <button class="btn btn-secondary" onclick="GameApp.prevMateri()">◀ Sebelumnya</button>
+                <button class="btn btn-accent" id="next-materi-btn" onclick="GameApp.nextMateri()">Selanjutnya ▶</button>
+            </div>
+        </section>
+
+        <!-- HALAMAN 4: MISI 1 - TEMUKAN TITIK LENYAP -->
+        <section id="page-4" class="page">
+            <h2>🎯 MISI 1: TEMUKAN TITIK LENYAP</h2>
+            <p class="subtitle" id="misi1-instruction">Klik pada area gambar di mana garis-garis perspektif saling bertemu (Titik Lenyap)!</p>
+
+            <div class="progress-container" style="max-width: 640px;">
+                <div class="progress-fill" id="misi1-progress"></div>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="misi1-canvas" width="640" height="300"></canvas>
+            </div>
+
+            <div id="misi1-feedback" class="feedback-box"></div>
+
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <button class="btn btn-secondary" id="misi1-retry-btn" style="display:none;" onclick="GameApp.retryMisi1()">🔄 Coba Lagi</button>
+                <button class="btn" id="misi1-next-btn" style="display:none;" onclick="GameApp.nextMisi1Challenge()">Tantangan Berikutnya ➔</button>
+            </div>
+        </section>
+
+        <!-- HALAMAN 5: MISI 2 - KENALI JENIS PERSPEKTIF -->
+        <section id="page-5" class="page">
+            <h2>🔍 MISI 2: KENALI JENIS PERSPEKTIF</h2>
+            <p class="subtitle">Analisis gambar berikut, apakah menggunakan 1 Titik Lenyap atau 2 Titik Lenyap?</p>
+
+            <div class="progress-container" style="max-width: 640px;">
+                <div class="progress-fill" id="misi2-progress"></div>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="misi2-canvas" width="640" height="260"></canvas>
+            </div>
+
+            <div class="options-grid" id="misi2-options">
+                <button class="option-btn" onclick="GameApp.answerMisi2(1)">
+                    📌 <strong>A. Perspektif 1 Titik Lenyap</strong>
+                </button>
+                <button class="option-btn" onclick="GameApp.answerMisi2(2)">
+                    📌 <strong>B. Perspektif 2 Titik Lenyap</strong>
+                </button>
+            </div>
+
+            <div id="misi2-feedback" class="feedback-box"></div>
+
+            <button class="btn" id="misi2-next-btn" style="margin-top:15px; display:none;" onclick="GameApp.nextMisi2Challenge()">
+                Lanjut Tantangan ➔
+            </button>
+        </section>
+
+        <!-- HALAMAN 6: KUIS AKHIR -->
+        <section id="page-6" class="page">
+            <div style="width:100%; max-width: 650px; display:flex; justify-content:space-between; align-items:center;">
+                <h2>📝 KUIS EVALUASI AKHIR</h2>
+                <span id="quiz-number-tag" style="font-size: 0.9rem; color: var(--accent); font-weight:bold;">Soal 1 dari 10</span>
+            </div>
+
+            <div class="progress-container" style="max-width: 650px;">
+                <div class="progress-fill" id="quiz-progress"></div>
+            </div>
+
+            <div class="materi-card" style="min-height: auto; text-align:left; align-items:flex-start; margin-bottom: 15px;">
+                <p id="quiz-question-text" style="font-size: 1.1rem; line-height: 1.5; font-weight:600;">
+                    Pertanyaan kuis akan dimuat di sini...
+                </p>
+            </div>
+
+            <div class="options-grid" id="quiz-options-grid" style="max-width:650px; grid-template-columns: 1fr;">
+                <!-- Disuntikkan via JS -->
+            </div>
+
+            <div id="quiz-feedback" class="feedback-box"></div>
+
+            <button class="btn btn-accent" id="quiz-next-btn" style="margin-top:15px; display:none;" onclick="GameApp.nextQuizQuestion()">
+                Soal Berikutnya ➔
+            </button>
+        </section>
+
+        <!-- HALAMAN 7: HASIL AKHIR / SERTIFIKAT PENCAPAIAN -->
+        <section id="page-7" class="page">
+            <div class="result-card">
+                <span style="font-size:3rem;">🏆</span>
+                <h2>HASIL EVALUASI PEMBELAJARAN</h2>
+                <p style="color:var(--text-muted);" id="res-player-name">Nama Siswa</p>
+
+                <div class="predicate-title" id="res-predicate">PERSPECTIVE MASTER</div>
+
+                <div style="display:flex; justify-content:center; gap:30px; margin: 20px 0;">
+                    <div>
+                        <div style="font-size:0.85rem; color:var(--text-muted);">TOTAL SKOR</div>
+                        <div style="font-size: 1.8rem; font-weight: bold; color: var(--accent);" id="res-total-score">0</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.85rem; color:var(--text-muted);">BENAR KUIS</div>
+                        <div style="font-size: 1.8rem; font-weight: bold; color: var(--success);" id="res-correct-count">0 / 10</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.85rem; color:var(--text-muted);">AKURASI</div>
+                        <div style="font-size: 1.8rem; font-weight: bold; color: #38bdf8;" id="res-accuracy">0%</div>
+                    </div>
+                </div>
+
+                <p id="res-motivation-text" style="font-size:0.95rem; line-height: 1.5; color: var(--text-light); margin-bottom: 20px;">
+                    Pesan motivasi akan tampil di sini.
+                </p>
+
+                <div class="badge-grid">
+                    <div class="badge-item">
+                        <span class="badge-icon">📍</span>
+                        <span class="badge-title">Misi VP Selesai</span>
+                    </div>
+                    <div class="badge-item">
+                        <span class="badge-icon">👁️</span>
+                        <span class="badge-title">Analis Perspektif</span>
+                    </div>
+                    <div class="badge-item">
+                        <span class="badge-icon">🎨</span>
+                        <span class="badge-title">Seni Rupa SMP</span>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:12px; justify-content:center; margin-top:15px; flex-wrap:wrap;">
+                    <button class="btn btn-secondary" onclick="window.print()">🖨️ Cetak Hasil</button>
+                    <button class="btn btn-accent" onclick="GameApp.resetGame()">🔄 Main Lagi</button>
+                    <button class="btn" onclick="GameApp.goToPage(1)">🏠 Kembali ke Beranda</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        /* Modern Web Audio API Sound Generator untuk Efek Suara Tanpa File Eksternal */
+        const SoundFX = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            playClick() {
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.05);
+            },
+            playCorrect() {
+                this.init();
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    gain.gain.setValueAtTime(0.15, now + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.2);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.2);
+                });
+            },
+            playWrong() {
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            },
+            playFanfare() {
+                this.init();
+                const now = this.ctx.currentTime;
+                const notes = [440, 554.37, 659.25, 880];
+                notes.forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + i * 0.12);
+                    gain.gain.setValueAtTime(0.2, now + i * 0.12);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.4);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.12);
+                    osc.stop(now + i * 0.12 + 0.4);
+                });
+            }
+        };
+
+        /* Application Master Controller */
+        const GameApp = {
+            playerName: "Siswa SMP",
+            score: 0,
+            currentLevel: 1,
+            currentMateriTab: 1,
+
+            // State Misi 1
+            misi1Index: 0,
+            misi1Target: { x: 0, y: 0 },
+            misi1Attempts: 0,
+            misi1Completed: false,
+            misi1Data: [
+                { title: "Tantangan 1: Jalan Raya Lurus", type: "road", vp: { x: 300, y: 140 }, desc: "Jalan lurus yang menyempit di kejauhan." },
+                { title: "Tantangan 2: Lorong Gedung Sekolah", type: "hallway", vp: { x: 300, y: 130 }, desc: "Lorong beratap dengan pintu di samping." },
+                { title: "Tantangan 3: Rel Kereta Api", type: "railway", vp: { x: 300, y: 150 }, desc: "Rel baja paralel menuju horizon." },
+                { title: "Tantangan 4: Terowongan Panjang", type: "tunnel", vp: { x: 300, y: 160 }, desc: "Ujung bundar cahaya di tengah terowongan." },
+                { title: "Tantangan 5: Interior Ruang Kelas", type: "room", vp: { x: 300, y: 140 }, desc: "Lantai ubin dan garis plafon kelas." }
+            ],
+
+            // State Misi 2
+            misi2Index: 0,
+            misi2Data: [
+                { type: 1, title: "Ruang Tamu Dilihat dari Depan Lurus", vpCount: 1, desc: "Sisi depan lemari dan dinding sejajar dengan pandangan, semua garis kedalaman menuju 1 titik." },
+                { type: 2, title: "Sudut Luar Gedung Bertingkat", vpCount: 2, desc: "Melihat sudut tajam bangunan sehingga dinding kiri dan kanan menyempit ke dua arah berbeda." },
+                { type: 3, title: "Jalan Tol Lurus Menerus", vpCount: 1, desc: "Jalur kendaraan lurus dengan marka menyatu di satu titik di batas horizon." },
+                { type: 4, title: "Kotak Kamar/Kardus Dilihat dari Miring", vpCount: 2, desc: "Sudut kotak menghadap pengamat, garis atas dan samping mengarah ke dua titik lenyap." },
+                { type: 5, title: "Deretan Tiang Listrik di Tepi Jalan Lurus", vpCount: 1, desc: "Tinggi tiang semakin mengecil menuju satu pusat di kejauhan." }
+            ],
+
+            // State Kuis
+            quizIndex: 0,
+            quizCorrectCount: 0,
+            quizQuestions: [
+                {
+                    q: "Apa yang dimaksud dengan menggambar perspektif dalam karya seni rupa?",
+                    options: [
+                        "Teknik menggambar objek dengan warna yang sangat mencolok",
+                        "Teknik menciptakan kesan ruang, jarak, dan kedalaman 3D pada bidang 2D",
+                        "Teknik melukis dengan mencampurkan berbagai jenis bahan cat",
+                        "Cara menggambar bayangan objek menggunakan garis vertikal sejajar"
+                    ],
+                    ans: 1,
+                    exp: "Perspektif adalah teknik menggambar untuk merepresentasikan objek 3D pada bidang datar 2D agar tampak memiliki kedalaman dan jarak realistis."
+                },
+                {
+                    q: "Garis khayal yang menunjukkan batas pandangan mata pengamat atau posisi tinggi mata disebut...",
+                    options: [
+                        "Garis Proyeksi",
+                        "Garis Diagonal",
+                        "Garis Horizon",
+                        "Garis Vertikal Utama"
+                    ],
+                    ans: 2,
+                    exp: "Garis horizon adalah garis khayal mendatar yang mendefinisikan tinggi mata pengamat terhadap objek."
+                },
+                {
+                    q: "Titik pusat tempat garis-garis sejajar seolah-olah bertemu dan menghilang di batas horizon dinamakan...",
+                    options: [
+                        "Titik Lenyap (Vanishing Point)",
+                        "Titik Pusat Sudut",
+                        "Titik Fokus Warna",
+                        "Titik Ketinggian Objek"
+                    ],
+                    ans: 0,
+                    exp: "Titik lenyap (vanishing point) adalah titik pertemuan garis-garis perspektif yang membentang menjauhi pandangan."
+                },
+                {
+                    q: "Ciri utama dari gambar perspektif SATU titik lenyap adalah...",
+                    options: [
+                        "Objek dilihat dari sudut miring dengan dua sisi menyempit",
+                        "Bidang depan objek sejajar dengan bidang gambar pengamat",
+                        "Memiliki tiga titik lenyap di luar bidang gambar",
+                        "Tidak mempunyai garis horizon"
+                    ],
+                    ans: 1,
+                    exp: "Pada perspektif 1 titik lenyap, permukaan depan objek sejajar dengan mata, sehingga garis tegak lurus sejajar dan garis kedalaman menuju 1 titik."
+                },
+                {
+                    q: "Manakah objek di bawah ini yang PALING COCOK digambar dengan teknik perspektif satu titik lenyap?",
+                    options: [
+                        "Sudut persimpangan luar gedung bertingkat",
+                        "Gedung pencakar langit dari pandangan mata burung miring",
+                        "Lorong gedung sekolah yang lurus atau rel kereta api",
+                        "Kotak hadiah yang diletakkan miring di atas meja"
+                    ],
+                    ans: 2,
+                    exp: "Lorong lurus, terowongan, dan rel kereta api sangat pas digambar dengan 1 titik lenyap karena memanjang lurus ke depan."
+                },
+                {
+                    q: "Kapan kita sebaiknya menggunakan teknik perspektif DUA titik lenyap?",
+                    options: [
+                        "Saat menggambar objek dari sudut (pojok) sehingga dua sisinya terlihat miring",
+                        "Saat posisi objek tepat lurus sejajar menghadap mata kita",
+                        "Saat gambar tidak memerlukan kesan kedalaman ruang",
+                        "Saat garis horizon berada di luar kertas gambar"
+                    ],
+                    ans: 0,
+                    exp: "Perspektif 2 titik lenyap digunakan saat objek dilihat dari sudutnya, sehingga kedua bidang sampingnya menuju titik lenyap kiri dan kanan."
+                },
+                {
+                    q: "Di manakah posisi titik-titik lenyap pada gambar perspektif 1 dan 2 titik lenyap diletakkan?",
+                    options: [
+                        "Selalu di sudut kiri bawah kertas",
+                        "Tepat pada garis horizon",
+                        "Bebas di mana saja tanpa aturan",
+                        "Di garis vertikal tengah gambar"
+                    ],
+                    ans: 1,
+                    exp: "Titik lenyap selalu terletak pada garis horizon (tingkat mata pengamat)."
+                },
+                {
+                    q: "Jika kita menggambar dengan sudut pandang 'Mata Burung' (Bird's Eye View), maka posisi garis horizon berada di...",
+                    options: [
+                        "Bagian bawah bidang gambar",
+                        "Bagian tengah bidang gambar",
+                        "Bagian atas bidang gambar",
+                        "Tidak ada garis horizon"
+                    ],
+                    ans: 2,
+                    exp: "Sudut pandang Mata Burung melihat objek dari posisi tinggi di atas, sehingga garis horizon terletak tinggi di bagian atas gambar."
+                },
+                {
+                    q: "Apa perbedaan paling mendasar antara perspektif 1 titik lenyap dan 2 titik lenyap?",
+                    options: [
+                        "Jumlah titik lenyap pada garis horizon dan arah bidang frontal objek",
+                        "Jenis pensil yang digunakan untuk mengarsir",
+                        "Ukuran kertas yang dibutuhkan untuk menggambar",
+                        "Tingkat kecerahan warna pada objek"
+                    ],
+                    ans: 0,
+                    exp: "Perbedaannya terletak pada jumlah titik pusat konvergensi (1 vs 2) serta orientasi bidang objek terhadap bidang pandang pengamat."
+                },
+                {
+                    q: "Sesuai hukum perspektif, makin jauh jarak suatu benda dari mata pengamat, maka ukuran benda tersebut akan...",
+                    options: [
+                        "Kelihatan makin besar dan membesar",
+                        "Tampak makin kecil dan merapat",
+                        "Tetap ukurannya tanpa perubahan",
+                        "Berubah bentuk menjadi lingkaran"
+                    ],
+                    ans: 1,
+                    exp: "Hukum dasar perspektif menyatakan objek yang semakin jauh akan terlihat semakin mengecil hingga seolah menyatu di titik lenyap."
+                }
+            ],
+
+            // Functions
+            init() {
+                this.renderHeroCanvas();
+                this.setupMisi1Canvas();
+            },
+
+            goToPage(pageNum) {
+                SoundFX.playClick();
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById(`page-${pageNum}`).classList.add('active');
+
+                if (pageNum === 3) {
+                    this.showMateri(this.currentMateriTab);
+                } else if (pageNum === 4) {
+                    this.startMisi1();
+                } else if (pageNum === 5) {
+                    this.startMisi2();
+                } else if (pageNum === 6) {
+                    this.startQuiz();
+                } else if (pageNum === 7) {
+                    this.showFinalResult();
+                }
+            },
+
+            startJourney() {
+                const input = document.getElementById('player-name').value.trim();
+                if (input) {
+                    this.playerName = input;
+                }
+                document.getElementById('player-display-name').innerText = this.playerName;
+                this.goToPage(2);
+            },
+
+            addScore(pts) {
+                this.score += pts;
+                document.getElementById('score-val').innerText = this.score;
+            },
+
+            // --- CANVAS RENDERING UTILS ---
+            renderHeroCanvas() {
+                const canvas = document.getElementById('hero-canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Background sky/grid
+                ctx.fillStyle = '#020617';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Horizon Line
+                const vpX = canvas.width / 2;
+                const vpY = canvas.height / 2;
+
+                ctx.strokeStyle = '#38bdf8';
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(0, vpY);
+                ctx.lineTo(canvas.width, vpY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Perspective grid lines
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+                for (let x = 0; x <= canvas.width; x += 60) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(vpX, vpY);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+
+                // Animated/static 3D Blocks in 1-point perspective
+                ctx.strokeStyle = '#f59e0b';
+                ctx.fillStyle = 'rgba(245, 158, 11, 0.2)';
+
+                // Left Box
+                this.drawPerspectiveBox1P(ctx, 60, 40, 100, 80, vpX, vpY);
+                // Right Box
+                this.drawPerspectiveBox1P(ctx, 440, 120, 100, 80, vpX, vpY);
+
+                // Vanishing Point Glowing Circle
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath();
+                ctx.arc(vpX, vpY, 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#f8fafc';
+                ctx.font = '12px Segoe UI';
+                ctx.fillText('Titik Lenyap (VP)', vpX - 45, vpY - 12);
+            },
+
+            drawPerspectiveBox1P(ctx, x, y, w, h, vpX, vpY) {
+                // Front face
+                ctx.beginPath();
+                ctx.rect(x, y, w, h);
+                ctx.fill();
+                ctx.stroke();
+
+                // Back lines to VP
+                ctx.beginPath();
+                ctx.moveTo(x, y); ctx.lineTo(vpX, vpY);
+                ctx.moveTo(x + w, y); ctx.lineTo(vpX, vpY);
+                ctx.moveTo(x + w, y + h); ctx.lineTo(vpX, vpY);
+                ctx.moveTo(x, y + h); ctx.lineTo(vpX, vpY);
+                ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+                ctx.stroke();
+            },
+
+            // --- HALAMAN 3: MATERI INTERAKTIF ---
+            showMateri(tabIndex) {
+                this.currentMateriTab = tabIndex;
+                const tabs = document.querySelectorAll('.tab-btn');
+                tabs.forEach((t, i) => {
+                    t.classList.toggle('active', i + 1 === tabIndex);
+                });
+
+                const container = document.getElementById('materi-content');
+                let html = '';
+
+                if (tabIndex === 1) {
+                    html = `
+                        <div style="max-width:650px; text-align:left;">
+                            <h3 style="color:var(--accent); font-size:1.4rem; margin-bottom:10px;">📐 Apa itu Menggambar Perspektif?</h3>
+                            <p style="line-height:1.6; margin-bottom:15px;">
+                                Menggambar perspektif adalah teknik seni rupa yang digunakan untuk mentransformasikan bentuk tiga dimensi (3D) ke atas media dua dimensi (2D) seperti kertas atau kanvas, sehingga tercipta <strong>ilusi kedalaman ruang, jarak, dan volume</strong> secara rasional.
+                            </p>
+                            <div style="background:rgba(37,99,235,0.15); padding:15px; border-radius:12px; border-left:4px solid var(--primary);">
+                                💡 <strong>Hukum Utama Perspektif:</strong> Benda dengan ukuran yang sama akan terlihat semakin kecil dan merapat ketika jaraknya semakin jauh dari pandangan mata pengamat.
+                            </div>
+                        </div>
+                    `;
+                } else if (tabIndex === 2) {
+                    html = `
+                        <div style="max-width:650px; text-align:left;">
+                            <h3 style="color:var(--accent); font-size:1.4rem; margin-bottom:10px;">🌅 Garis Horizon (Horizon Line)</h3>
+                            <p style="line-height:1.6; margin-bottom:15px;">
+                                Garis Horizon merupakan garis khayal horizontal yang berada sejajar dengan ketinggian mata pengamat. Garis ini memisahkan area langit dan bumi pada bidang gambar.
+                            </p>
+                            <ul style="margin-left:20px; line-height:1.8; color:var(--text-muted);">
+                                <li>🦅 <strong>Sudut Pandang Mata Burung (Tinggi):</strong> Horizon di bagian atas gambar.</li>
+                                <li>👤 <strong>Sudut Pandang Normal:</strong> Horizon di bagian tengah gambar.</li>
+                                <li>🐜 <strong>Sudut Pandang Mata Cacing (Rendah):</strong> Horizon di bagian bawah gambar.</li>
+                            </ul>
+                        </div>
+                    `;
+                } else if (tabIndex === 3) {
+                    html = `
+                        <div style="max-width:650px; text-align:left;">
+                            <h3 style="color:var(--accent); font-size:1.4rem; margin-bottom:10px;">🎯 Titik Lenyap (Vanishing Point)</h3>
+                            <p style="line-height:1.6; margin-bottom:15px;">
+                                Titik Lenyap (TL) adalah sebuah titik pada garis horizon di mana garis-garis sejajar proyeksi objek seolah-olah saling bertemu, berpusat, dan akhirnya menghilang.
+                            </p>
+                            <p style="line-height:1.6; color:var(--text-muted);">
+                                Semua garis sejajar yang menjauhi pengamat akan selalu berkonvergensi (mengarah) menuju Titik Lenyap ini.
+                            </p>
+                        </div>
+                    `;
+                } else if (tabIndex === 4) {
+                    html = `
+                        <div style="max-width:650px; text-align:left;">
+                            <h3 style="color:var(--accent); font-size:1.4rem; margin-bottom:10px;">1️⃣ Perspektif Satu Titik Lenyap</h3>
+                            <p style="line-height:1.6; margin-bottom:12px;">
+                                Digunakan ketika bidang depan objek berada <strong>sejajar dengan bidang gambar / pandangan mata</strong>.
+                            </p>
+                            <div style="background:rgba(255,255,255,0.05); padding:12px 18px; border-radius:10px; margin-bottom:10px;">
+                                ✨ <strong>Ciri Khas:</strong> Memiliki 1 Titik Lenyap. Garis horizontal dan vertikal objek tetap lurus tegak, sedangkan garis kedalaman mengarah ke 1 titik.
+                            </div>
+                            <p style="font-size:0.9rem; color:var(--text-muted);">
+                                📍 Contoh objek: Jalan raya lurus, rel kereta api, lorong gedung, atau tampak interior ruangan.
+                            </p>
+                        </div>
+                    `;
+                } else if (tabIndex === 5) {
+                    html = `
+                        <div style="max-width:650px; text-align:left;">
+                            <h3 style="color:var(--accent); font-size:1.4rem; margin-bottom:10px;">2️⃣ Perspektif Dua Titik Lenyap</h3>
+                            <p style="line-height:1.6; margin-bottom:12px;">
+                                Digunakan ketika objek dilihat dari <strong>sudutnya (miring)</strong>, sehingga tidak ada permukaan frontal yang sejajar langsung dengan mata.
+                            </p>
+                            <div style="background:rgba(255,255,255,0.05); padding:12px 18px; border-radius:10px; margin-bottom:10px;">
+                                ✨ <strong>Ciri Khas:</strong> Memiliki 2 Titik Lenyap di sebelah kiri dan kanan garis horizon. Garis vertikal tetap tegak, sementara dua sisi kedalaman menuju 2 titik berbeda.
+                            </div>
+                            <p style="font-size:0.9rem; color:var(--text-muted);">
+                                📍 Contoh objek: Sudut bangunan/gedung, eksterior rumah, atau kubus yang diputar miring.
+                            </p>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = html;
+                document.getElementById('next-materi-btn').innerText = (tabIndex === 5) ? "Mulai Misi 1 🎯" : "Selanjutnya ▶";
+            },
+
+            prevMateri() {
+                if (this.currentMateriTab > 1) {
+                    this.showMateri(this.currentMateriTab - 1);
+                }
+            },
+
+            nextMateri() {
+                if (this.currentMateriTab < 5) {
+                    this.showMateri(this.currentMateriTab + 1);
+                } else {
+                    this.goToPage(4);
+                }
+            },
+
+            // --- HALAMAN 4: MISI 1 (TEMUKAN TITIK LENYAP) ---
+            setupMisi1Canvas() {
+                const canvas = document.getElementById('misi1-canvas');
+                canvas.addEventListener('click', (e) => {
+                    if (this.misi1Completed) return;
+                    const rect = canvas.getBoundingClientRect();
+                    const clickX = (e.clientX - rect.left) * (canvas.width / rect.width);
+                    const clickY = (e.clientY - rect.top) * (canvas.height / rect.height);
+                    this.checkMisi1Click(clickX, clickY);
+                });
+            },
+
+            startMisi1() {
+                this.currentLevel = 1;
+                document.getElementById('level-val').innerText = '1 (Misi 1)';
+                this.misi1Index = 0;
+                this.loadMisi1Challenge();
+            },
+
+            loadMisi1Challenge() {
+                this.misi1Completed = false;
+                this.misi1Attempts = 0;
+                const data = this.misi1Data[this.misi1Index];
+                this.misi1Target = data.vp;
+
+                document.getElementById('misi1-instruction').innerText = `${data.title}: ${data.desc}`;
+                document.getElementById('misi1-progress').style.width = `${((this.misi1Index) / 5) * 100}%`;
+                
+                const fb = document.getElementById('misi1-feedback');
+                fb.style.display = 'none';
+                document.getElementById('misi1-retry-btn').style.display = 'none';
+                document.getElementById('misi1-next-btn').style.display = 'none';
+
+                this.drawMisi1Scene(false);
+            },
+
+            drawMisi1Scene(reveal) {
+                const canvas = document.getElementById('misi1-canvas');
+                const ctx = canvas.getContext('2d');
+                const data = this.misi1Data[this.misi1Index];
+                const vp = data.vp;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Sky background
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                if (data.type === 'road') {
+                    // Ground
+                    ctx.fillStyle = '#1e293b';
+                    ctx.fillRect(0, vp.y, canvas.width, canvas.height - vp.y);
+
+                    // Road triangle
+                    ctx.fillStyle = '#334155';
+                    ctx.beginPath();
+                    ctx.moveTo(vp.x, vp.y);
+                    ctx.lineTo(100, canvas.height);
+                    ctx.lineTo(500, canvas.height);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Center dash line
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.setLineDash([10, 10]);
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(vp.x, vp.y);
+                    ctx.lineTo(canvas.width / 2, canvas.height);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.lineWidth = 1;
+
+                    // Side poles
+                    for (let i = 0.2; i <= 1.0; i += 0.2) {
+                        let xL = vp.x + (50 - vp.x) * i;
+                        let yL = vp.y + (canvas.height - vp.y) * i;
+                        let h = 80 * i;
+                        ctx.strokeStyle = '#94a3b8';
+                        ctx.beginPath();
+                        ctx.moveTo(xL, yL);
+                        ctx.lineTo(xL, yL - h);
+                        ctx.stroke();
+                    }
+                } else if (data.type === 'hallway') {
+                    // Back wall rect
+                    let bw = 120, bh = 80;
+                    let bx = vp.x - bw / 2, by = vp.y - bh / 2;
+
+                    ctx.fillStyle = '#1e293b';
+                    ctx.fillRect(bx, by, bw, bh);
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.strokeRect(bx, by, bw, bh);
+
+                    // Perspective lines to corners
+                    ctx.strokeStyle = '#38bdf8';
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0); ctx.lineTo(bx, by);
+                    ctx.moveTo(canvas.width, 0); ctx.lineTo(bx + bw, by);
+                    ctx.moveTo(canvas.width, canvas.height); ctx.lineTo(bx + bw, by + bh);
+                    ctx.moveTo(0, canvas.height); ctx.lineTo(bx, by + bh);
+                    ctx.stroke();
+                } else if (data.type === 'railway') {
+                    // Ground
+                    ctx.fillStyle = '#1e293b';
+                    ctx.fillRect(0, vp.y, canvas.width, canvas.height - vp.y);
+
+                    // Rails
+                    ctx.strokeStyle = '#cbd5e1';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(vp.x, vp.y); ctx.lineTo(180, canvas.height);
+                    ctx.moveTo(vp.x, vp.y); ctx.lineTo(420, canvas.height);
+                    ctx.stroke();
+                    ctx.lineWidth = 1;
+
+                    // Wooden ties
+                    ctx.strokeStyle = '#78350f';
+                    for (let i = 0.15; i <= 1.0; i += 0.08) {
+                        let y = vp.y + (canvas.height - vp.y) * Math.pow(i, 2);
+                        let w = (420 - 180) * Math.pow(i, 2);
+                        let x = vp.x - w / 2;
+                        ctx.beginPath();
+                        ctx.moveTo(x, y);
+                        ctx.lineTo(x + w, y);
+                        ctx.stroke();
+                    }
+                } else if (data.type === 'tunnel') {
+                    // Circular tunnel arcs
+                    for (let r = 20; r <= 280; r += 30) {
+                        ctx.strokeStyle = 'rgba(56, 189, 248, ' + (1 - r / 300) + ')';
+                        ctx.beginPath();
+                        ctx.arc(vp.x, vp.y, r, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                } else if (data.type === 'room') {
+                    // Room grid
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                    for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
+                        ctx.beginPath();
+                        ctx.moveTo(vp.x, vp.y);
+                        ctx.lineTo(vp.x + Math.cos(a) * 400, vp.y + Math.sin(a) * 400);
+                        ctx.stroke();
+                    }
+                }
+
+                // Draw Horizon Line
+                ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)';
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(0, vp.y);
+                ctx.lineTo(canvas.width, vp.y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                if (reveal) {
+                    // Highlight VP
+                    ctx.fillStyle = '#10b981';
+                    ctx.beginPath();
+                    ctx.arc(vp.x, vp.y, 12, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    ctx.lineWidth = 1;
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 14px Segoe UI';
+                    ctx.fillText('TITIK LENYAP', vp.x - 45, vp.y - 18);
+                }
+            },
+
+            checkMisi1Click(x, y) {
+                const dist = Math.hypot(x - this.misi1Target.x, y - this.misi1Target.y);
+                const fb = document.getElementById('misi1-feedback');
+                fb.style.display = 'block';
+
+                if (dist <= 35) {
+                    // Correct
+                    SoundFX.playCorrect();
+                    this.misi1Completed = true;
+                    this.addScore(100);
+                    this.drawMisi1Scene(true);
+
+                    fb.className = 'feedback-box correct';
+                    fb.innerHTML = `🎉 <strong>HEBAT! TEPAT SASARAN!</strong><br>Kamu berhasil menemukan Titik Lenyap dengan presisi tinggi (+100 Pts).`;
+                    document.getElementById('misi1-next-btn').style.display = 'inline-flex';
+                } else {
+                    // Wrong
+                    SoundFX.playWrong();
+                    this.misi1Attempts++;
+                    fb.className = 'feedback-box wrong';
+                    fb.innerHTML = `❌ <strong>HAMPIR TEPAT!</strong><br>Perhatikan pertemuaan garis-garis membujur. Coba klik lebih dekat ke pusat konvergensi garis!`;
+                    document.getElementById('misi1-retry-btn').style.display = 'inline-flex';
+                }
+            },
+
+            retryMisi1() {
+                SoundFX.playClick();
+                document.getElementById('misi1-feedback').style.display = 'none';
+                document.getElementById('misi1-retry-btn').style.display = 'none';
+            },
+
+            nextMisi1Challenge() {
+                this.misi1Index++;
+                if (this.misi1Index < this.misi1Data.length) {
+                    this.loadMisi1Challenge();
+                } else {
+                    // Complete Misi 1
+                    SoundFX.playFanfare();
+                    document.getElementById('misi1-progress').style.width = '100%';
+                    alert("🌟 SELAMAT! Kamu telah menyelesaikan Misi 1 dan menguasai pencarian Titik Lenyap!");
+                    this.goToPage(5);
+                }
+            },
+
+            // --- HALAMAN 5: MISI 2 (KENALI JENIS PERSPEKTIF) ---
+            startMisi2() {
+                this.currentLevel = 2;
+                document.getElementById('level-val').innerText = '2 (Misi 2)';
+                this.misi2Index = 0;
+                this.loadMisi2Challenge();
+            },
+
+            loadMisi2Challenge() {
+                const data = this.misi2Data[this.misi2Index];
+                document.getElementById('misi2-progress').style.width = `${(this.misi2Index / 5) * 100}%`;
+
+                const fb = document.getElementById('misi2-feedback');
+                fb.style.display = 'none';
+                document.getElementById('misi2-next-btn').style.display = 'none';
+
+                // Reset buttons state
+                const btns = document.querySelectorAll('#misi2-options .option-btn');
+                btns.forEach(b => {
+                    b.className = 'option-btn';
+                    b.disabled = false;
+                });
+
+                this.drawMisi2Scene(data.type);
+            },
+
+            drawMisi2Scene(type) {
+                const canvas = document.getElementById('misi2-canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = '#020617';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const horizonY = 140;
+
+                // Horizon line
+                ctx.strokeStyle = '#38bdf8';
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(0, horizonY); ctx.lineTo(canvas.width, horizonY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                if (type === 1) {
+                    // 1 VP Scene (Room interior)
+                    const vpX = 300, vpY = horizonY;
+                    ctx.strokeStyle = '#f59e0b';
+
+                    // Front rectangle
+                    ctx.strokeRect(200, 80, 200, 120);
+
+                    // Guidelines to VP
+                    ctx.beginPath();
+                    ctx.moveTo(200, 80); ctx.lineTo(vpX, vpY);
+                    ctx.moveTo(400, 80); ctx.lineTo(vpX, vpY);
+                    ctx.moveTo(400, 200); ctx.lineTo(vpX, vpY);
+                    ctx.moveTo(200, 200); ctx.lineTo(vpX, vpY);
+                    ctx.stroke();
+
+                    // VP point
+                    ctx.fillStyle = '#ef4444';
+                    ctx.beginPath(); ctx.arc(vpX, vpY, 6, 0, Math.PI*2); ctx.fill();
+
+                } else {
+                    // 2 VP Scene (Corner building)
+                    const vp1X = 60, vp2X = 540, vpY = horizonY;
+                    const cornerX = 300, cornerTop = 60, cornerBottom = 220;
+
+                    // Corner edge
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(cornerX, cornerTop); ctx.lineTo(cornerX, cornerBottom);
+                    ctx.stroke();
+                    ctx.lineWidth = 1;
+
+                    // Left face guidelines to VP1
+                    ctx.beginPath();
+                    ctx.moveTo(cornerX, cornerTop); ctx.lineTo(vp1X, vpY);
+                    ctx.moveTo(cornerX, cornerBottom); ctx.lineTo(vp1X, vpY);
+                    // Right face guidelines to VP2
+                    ctx.moveTo(cornerX, cornerTop); ctx.lineTo(vp2X, vpY);
+                    ctx.moveTo(cornerX, cornerBottom); ctx.lineTo(vp2X, vpY);
+                    ctx.stroke();
+
+                    // Left & Right side vertical edges
+                    ctx.beginPath();
+                    ctx.moveTo(160, 95); ctx.lineTo(160, 185);
+                    ctx.moveTo(440, 95); ctx.lineTo(440, 185);
+                    ctx.stroke();
+
+                    // VP points
+                    ctx.fillStyle = '#ef4444';
+                    ctx.beginPath(); ctx.arc(vp1X, vpY, 6, 0, Math.PI*2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(vp2X, vpY, 6, 0, Math.PI*2); ctx.fill();
+                }
+            },
+
+            answerMisi2(choice) {
+                const data = this.misi2Data[this.misi2Index];
+                const isCorrect = (choice === data.vpCount);
+                const fb = document.getElementById('misi2-feedback');
+                fb.style.display = 'block';
+
+                const btns = document.querySelectorAll('#misi2-options .option-btn');
+                btns.forEach(b => b.disabled = true);
+
+                if (isCorrect) {
+                    SoundFX.playCorrect();
+                    this.addScore(100);
+                    btns[choice - 1].classList.add('selected-correct');
+                    fb.className = 'feedback-box correct';
+                    fb.innerHTML = `🎉 <strong>TEPAT sekali!</strong><br>${data.desc} (+100 Pts)`;
+                } else {
+                    SoundFX.playWrong();
+                    btns[choice - 1].classList.add('selected-wrong');
+                    btns[data.vpCount - 1].classList.add('selected-correct');
+                    fb.className = 'feedback-box wrong';
+                    fb.innerHTML = `💡 <strong>JAWABAN KURANG TEPAT!</strong><br>Jawaban benar adalah Perspektif ${data.vpCount} Titik Lenyap. ${data.desc}`;
+                }
+
+                document.getElementById('misi2-next-btn').style.display = 'inline-flex';
+            },
+
+            nextMisi2Challenge() {
+                this.misi2Index++;
+                if (this.misi2Index < this.misi2Data.length) {
+                    this.loadMisi2Challenge();
+                } else {
+                    SoundFX.playFanfare();
+                    document.getElementById('misi2-progress').style.width = '100%';
+                    alert("🏆 HEBAT! Misi 2 selesai. Saatnya menuju Kuis Akhir Evaluasi!");
+                    this.goToPage(6);
+                }
+            },
+
+            // --- HALAMAN 6: KUIS AKHIR ---
+            startQuiz() {
+                this.currentLevel = 3;
+                document.getElementById('level-val').innerText = '3 (Kuis Akhir)';
+                this.quizIndex = 0;
+                this.quizCorrectCount = 0;
+                this.loadQuizQuestion();
+            },
+
+            loadQuizQuestion() {
+                const q = this.quizQuestions[this.quizIndex];
+                document.getElementById('quiz-number-tag').innerText = `Soal ${this.quizIndex + 1} dari 10`;
+                document.getElementById('quiz-progress').style.width = `${((this.quizIndex) / 10) * 100}%`;
+                document.getElementById('quiz-question-text').innerText = `${this.quizIndex + 1}. ${q.q}`;
+
+                const grid = document.getElementById('quiz-options-grid');
+                grid.innerHTML = '';
+
+                const labels = ['A', 'B', 'C', 'D'];
+                q.options.forEach((opt, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    btn.innerHTML = `<strong>${labels[idx]}.</strong> ${opt}`;
+                    btn.onclick = () => this.answerQuiz(idx);
+                    grid.appendChild(btn);
+                });
+
+                document.getElementById('quiz-feedback').style.display = 'none';
+                document.getElementById('quiz-next-btn').style.display = 'none';
+            },
+
+            answerQuiz(optIdx) {
+                const q = this.quizQuestions[this.quizIndex];
+                const isCorrect = (optIdx === q.ans);
+                const fb = document.getElementById('quiz-feedback');
+                fb.style.display = 'block';
+
+                const btns = document.querySelectorAll('#quiz-options-grid .option-btn');
+                btns.forEach(b => b.disabled = true);
+
+                if (isCorrect) {
+                    SoundFX.playCorrect();
+                    this.quizCorrectCount++;
+                    this.addScore(50);
+                    btns[optIdx].classList.add('selected-correct');
+                    fb.className = 'feedback-box correct';
+                    fb.innerHTML = `✅ <strong>BENAR! (+50 Pts)</strong><br>${q.exp}`;
+                } else {
+                    SoundFX.playWrong();
+                    btns[optIdx].classList.add('selected-wrong');
+                    btns[q.ans].classList.add('selected-correct');
+                    fb.className = 'feedback-box wrong';
+                    fb.innerHTML = `❌ <strong>SALAH!</strong><br>${q.exp}`;
+                }
+
+                document.getElementById('quiz-next-btn').style.display = 'inline-flex';
+            },
+
+            nextQuizQuestion() {
+                this.quizIndex++;
+                if (this.quizIndex < this.quizQuestions.length) {
+                    this.loadQuizQuestion();
+                } else {
+                    document.getElementById('quiz-progress').style.width = '100%';
+                    this.goToPage(7);
+                }
+            },
+
+            // --- HALAMAN 7: HASIL AKHIR & LAPORAN ---
+            showFinalResult() {
+                SoundFX.playFanfare();
+
+                const accuracy = Math.round((this.quizCorrectCount / 10) * 100);
+                document.getElementById('res-player-name').innerText = `Penjelajah: ${this.playerName}`;
+                document.getElementById('res-total-score').innerText = this.score;
+                document.getElementById('res-correct-count').innerText = `${this.quizCorrectCount} / 10`;
+                document.getElementById('res-accuracy').innerText = `${accuracy}%`;
+
+                let predicate = "";
+                let msg = "";
+
+                if (accuracy >= 90) {
+                    predicate = "PERSPECTIVE MASTER";
+                    msg = "🌟 Luar biasa sempurna! Kamu telah menguasai seluruh konsep dan hukum perspektif 1 & 2 titik lenyap dengan sangat presisi!";
+                } else if (accuracy >= 75) {
+                    predicate = "PERSPECTIVE EXPLORER";
+                    msg = "👏 Hasil yang sangat bagus! Kamu sudah memahami prinsip dasar perspektif dengan baik dan siap menggambar karya yang mengagumkan.";
+                } else if (accuracy >= 60) {
+                    predicate = "PERSPECTIVE LEARNER";
+                    msg = "👍 Cukup baik! Kamu sudah memahami konsep dasar, namun perlu lebih banyak berlatih dalam mengidentifikasi titik lenyap pada objek miring.";
+                } else {
+                    predicate = "AYO BELAJAR LAGI";
+                    msg = "💪 Jangan berkecil hati! Pelajari kembali modul materi perspektif dan coba ikuti petualangan ini sekali lagi.";
+                }
+
+                document.getElementById('res-predicate').innerText = predicate;
+                document.getElementById('res-motivation-text').innerText = msg;
+            },
+
+            resetGame() {
+                this.score = 0;
+                document.getElementById('score-val').innerText = '0';
+                this.goToPage(1);
+            }
+        };
+
+        // Window Load Initialization
+        window.onload = function() {
+            GameApp.init();
+        };
+    </script>
+</body>
+</html>
